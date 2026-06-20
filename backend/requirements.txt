@@ -4,5 +4,5 @@ pydantic
 sqlalchemy
 pgvector
 psycopg2-binary
-pyautogen
+pyautogen==0.2.35
 mcp
