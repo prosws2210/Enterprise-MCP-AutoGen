@@ -1,11 +1,16 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
+from sqlalchemy import text
 from .database import engine, Base
 from . import models, agent_utils
 
+# Ensure pgvector extension exists before creating tables
+with engine.connect() as conn:
+    conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
+    conn.commit()
+
 # Create database tables
-# In production, use Alembic for migrations
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="AI-POS Backend")
