@@ -1,0 +1,527 @@
+# PROJECT TITLE
+
+AI Personal Operating System (AI-POS)
+
+An enterprise-grade Agentic AI platform that acts as a user's digital chief of staff. The system should use MCP (Model Context Protocol), AutoGen Multi-Agent Architecture, RAG, Tool Calling, Memory Systems, Workflow Automation, and Multi-Source Knowledge Integration.
+
+The platform should connect with Gmail, Google Drive, Google Calendar, GitHub, Notion, LinkedIn, Slack, Discord, WhatsApp, Microsoft Office, Google Docs, Google Sheets, Google Meet, Zoom, and custom APIs.
+
+The objective is to create an intelligent digital assistant that can think, plan, execute, remember, coordinate agents, manage projects, perform research, automate workflows, and interact with external tools.
+
+---
+
+## CORE VISION
+
+Imagine combining:
+
+* ChatGPT
+* Notion AI
+* GitHub Copilot
+* Replit Agent
+* Claude Projects
+* Cursor AI
+* Personal Assistant
+* Project Manager
+* Research Analyst
+
+into one unified platform.
+
+The user should be able to type:
+
+"Prepare me for Deloitte interview."
+
+or
+
+"Manage my final year project."
+
+or
+
+"Create a startup plan and execute it."
+
+and multiple AI agents should collaborate automatically.
+
+---
+
+## SYSTEM ARCHITECTURE
+
+Frontend:
+
+* Next.js 15
+* TypeScript
+* TailwindCSS
+* ShadCN UI
+* Framer Motion
+
+Backend:
+
+* FastAPI
+* Python
+
+AI Layer:
+
+* AutoGen
+* MCP
+* LangGraph
+* OpenAI APIs
+* Gemini APIs
+* Claude APIs
+
+Database:
+
+* PostgreSQL
+* Supabase
+
+Vector Database:
+
+* Pinecone
+* ChromaDB
+
+Authentication:
+
+* Clerk
+* Google OAuth
+
+Deployment:
+
+* Docker
+* AWS
+* Vercel
+* Railway
+
+---
+
+## AI AGENTS
+
+1. Chief Agent
+
+Responsibilities:
+
+* Orchestrates all agents
+* Delegates tasks
+* Tracks progress
+* Creates workflows
+
+2. Research Agent
+
+Responsibilities:
+
+* Web research
+* Market research
+* Academic paper analysis
+* Competitor analysis
+
+Sources:
+
+* Google Search
+* Arxiv
+* PubMed
+* Wikipedia
+* News APIs
+
+3. Project Manager Agent
+
+Responsibilities:
+
+* Create roadmaps
+* Sprint planning
+* Task management
+* Resource allocation
+
+Outputs:
+
+* Kanban boards
+* Gantt charts
+* Milestones
+
+4. Coding Agent
+
+Responsibilities:
+
+* Generate code
+* Review code
+* Create documentation
+* Fix bugs
+* Generate tests
+
+Integrations:
+
+* GitHub
+* GitLab
+* Bitbucket
+
+5. Resume Agent
+
+Responsibilities:
+
+* Resume review
+* ATS scoring
+* Job matching
+* Resume generation
+
+6. Career Agent
+
+Responsibilities:
+
+* Interview preparation
+* Learning roadmap
+* Internship recommendations
+* Skill-gap analysis
+
+7. Writing Agent
+
+Responsibilities:
+
+* Blogs
+* Reports
+* Emails
+* Documentation
+* LinkedIn posts
+
+8. Meeting Agent
+
+Responsibilities:
+
+* Meeting summaries
+* Action items
+* Follow-ups
+
+Sources:
+
+* Zoom
+* Meet
+* Teams
+
+9. Data Analyst Agent
+
+Responsibilities:
+
+* CSV analysis
+* Excel analysis
+* Dashboard generation
+* Forecasting
+
+10. Automation Agent
+
+Responsibilities:
+
+* Trigger workflows
+* Schedule actions
+* Execute automations
+
+---
+
+## MCP TOOL INTEGRATIONS
+
+Notion MCP
+
+Capabilities:
+
+* Read pages
+* Create pages
+* Update databases
+* Create tasks
+* Search notes
+
+GitHub MCP
+
+Capabilities:
+
+* Create repositories
+* Commit code
+* Open issues
+* Generate pull requests
+* Review code
+
+Google Drive MCP
+
+Capabilities:
+
+* Upload files
+* Download files
+* Search documents
+* Organize folders
+
+Gmail MCP
+
+Capabilities:
+
+* Read emails
+* Send emails
+* Draft emails
+* Categorize emails
+
+Google Calendar MCP
+
+Capabilities:
+
+* Create events
+* Reschedule meetings
+* Send reminders
+
+Google Docs MCP
+
+Capabilities:
+
+* Create documents
+* Update reports
+* Generate project documentation
+
+Google Sheets MCP
+
+Capabilities:
+
+* Store analytics
+* Budget tracking
+* Progress tracking
+
+Slack MCP
+
+Capabilities:
+
+* Send messages
+* Create channels
+* Team collaboration
+
+Discord MCP
+
+Capabilities:
+
+* Community management
+* Notifications
+
+LinkedIn MCP
+
+Capabilities:
+
+* Draft posts
+* Career insights
+
+WhatsApp MCP
+
+Capabilities:
+
+* Notifications
+* Reminders
+* Status updates
+
+Jira MCP
+
+Capabilities:
+
+* Create tickets
+* Track projects
+* Sprint management
+
+Trello MCP
+
+Capabilities:
+
+* Board automation
+
+---
+
+## KNOWLEDGE MANAGEMENT
+
+The platform should maintain:
+
+1. Long-Term Memory
+
+Stores:
+
+* User preferences
+* Career goals
+* Projects
+* Learning history
+
+2. Short-Term Memory
+
+Stores:
+
+* Current tasks
+* Active conversations
+* Recent workflows
+
+3. Semantic Memory
+
+Stores:
+
+* Embedded documents
+* Research papers
+* Notes
+* PDFs
+
+Use:
+
+* RAG
+* Vector Search
+* Embeddings
+
+---
+
+## WORKFLOW EXAMPLES
+
+Workflow 1
+
+Prompt:
+
+"Prepare me for Deloitte interview"
+
+Execution:
+
+Research Agent
+→ Company Research
+
+Resume Agent
+→ Resume Analysis
+
+Career Agent
+→ Skill Gap Analysis
+
+Writing Agent
+→ Interview Answers
+
+Calendar Agent
+→ Study Schedule
+
+Notion Agent
+→ Create Preparation Dashboard
+
+---
+
+Workflow 2
+
+Prompt:
+
+"Build my startup"
+
+Execution:
+
+Research Agent
+→ Market Research
+
+Writing Agent
+→ Business Plan
+
+Finance Agent
+→ Revenue Model
+
+Project Agent
+→ Roadmap
+
+GitHub Agent
+→ Setup Repository
+
+Notion Agent
+→ Create Workspace
+
+---
+
+Workflow 3
+
+Prompt:
+
+"Manage my Final Year Project"
+
+Execution:
+
+Project Manager Agent
+→ Milestones
+
+Coding Agent
+→ Development Tasks
+
+Research Agent
+→ Literature Survey
+
+GitHub Agent
+→ Version Control
+
+Notion Agent
+→ Documentation
+
+Calendar Agent
+→ Deadline Tracking
+
+---
+
+## ADVANCED FEATURES
+
+1. Agent-to-Agent Communication
+
+Agents should:
+
+* Debate
+* Review each other
+* Verify outputs
+
+2. Human Approval Layer
+
+Before:
+
+* Sending emails
+* Publishing posts
+* Creating commits
+
+Ask for approval.
+
+3. Workflow Builder
+
+Drag-and-drop workflow creation similar to n8n.
+
+4. AI Dashboard
+
+Displays:
+
+* Running agents
+* Active tasks
+* Workflow history
+
+5. Voice Assistant
+
+Speech-to-text
+Text-to-speech
+
+6. Mobile Responsive Design
+
+7. Real-Time Notifications
+
+8. Activity Timeline
+
+9. Team Collaboration
+
+10. Multi-Tenant SaaS Architecture
+
+---
+
+## SECURITY
+
+* OAuth Authentication
+* JWT Tokens
+* Role-Based Access Control
+* Audit Logs
+* Encrypted Storage
+* API Rate Limiting
+
+---
+
+## DELIVERABLES
+
+Generate:
+
+1. Complete System Design
+2. Database Schema
+3. Folder Structure
+4. API Architecture
+5. MCP Server Architecture
+6. Agent Architecture
+7. UI/UX Design
+8. Wireframes
+9. FastAPI Backend
+10. Next.js Frontend
+11. AutoGen Integration
+12. Docker Configuration
+13. Deployment Guide
+14. CI/CD Pipeline
+15. Production-Ready Codebase
+
+The final result should feel like a combination of ChatGPT, Notion AI, GitHub Copilot, and a Personal Chief-of-Staff, powered by MCP and AutoGen.
