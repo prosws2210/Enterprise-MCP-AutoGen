@@ -1,0 +1,8 @@
+fastapi
+uvicorn[standard]
+pydantic
+sqlalchemy
+pgvector
+psycopg2-binary
+pyautogen
+mcp
