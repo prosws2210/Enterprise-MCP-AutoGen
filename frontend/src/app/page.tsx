@@ -34,18 +34,47 @@ export default function Home() {
     setIsLoading(true);
 
     try {
-      const response = await fetch("http://localhost:8000/chat", {
+      const response = await fetch("http://localhost:8000/chat/stream", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ message: input }),
       });
-      const data = await response.json();
-      
-      const agentMessage: Message = { role: "agent", content: data.response };
-      setMessages((prev) => [...prev, agentMessage]);
+
+      const reader = response.body?.getReader();
+      const decoder = new TextDecoder("utf-8");
+
+      if (!reader) throw new Error("Stream not available");
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+
+        const chunk = decoder.decode(value, { stream: true });
+        const events = chunk.split("\n\n");
+        
+        for (const event of events) {
+          if (event.startsWith("data: ")) {
+            const dataStr = event.replace("data: ", "").trim();
+            if (dataStr) {
+              const data = JSON.parse(dataStr);
+              
+              let displayContent = data.content;
+              if (data.tool_calls && data.tool_calls.length > 0) {
+                 displayContent += `\n[Executing Tools: ${data.tool_calls.join(", ")}]`;
+              }
+              
+              const agentMessage: Message = { 
+                role: "agent", 
+                content: `[${data.name}]\n${displayContent || "Working..."}` 
+              };
+              setMessages((prev) => [...prev, agentMessage]);
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error("Failed to send message:", error);
-      setMessages((prev) => [...prev, { role: "agent", content: "Error connecting to backend. Ensure FastAPI is running on port 8000." }]);
+      setMessages((prev) => [...prev, { role: "agent", content: "Error connecting to backend stream." }]);
     } finally {
       setIsLoading(false);
     }

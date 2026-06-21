@@ -2,6 +2,10 @@
 
 Welcome to **AI-POS**—an enterprise-grade Agentic AI platform designed to act as your digital "Chief of Staff." 
 
+## 📸 System Overview
+![J.A.R.V.I.S UI Screenshot 1](./pic1.png)
+![J.A.R.V.I.S UI Screenshot 2](./PIC2.png)
+
 Instead of a standard chatbot, AI-POS is a fully autonomous orchestration layer that can interface directly with your personal and enterprise tools (like Notion, GitHub, Calendar, etc.) to perform complex, multi-step tasks on your behalf. 
 
 ## 🌟 How It Helps You
@@ -27,6 +31,15 @@ Instead of writing custom API integration code for every single app (Notion, Sla
 - **Frontend:** A breathtaking, Jarvis-inspired, holographic UI built with **Next.js 15**, React, Tailwind CSS v4, and Framer Motion. 
 - **Backend:** A high-performance Python **FastAPI** application that hosts the AutoGen environment.
 - **Database:** A local **PostgreSQL** database supercharged with the `pgvector` extension for storing and querying AI vector embeddings (RAG).
+
+---
+
+## ⚡ Architectural Advancements
+
+1. **Semantic Tool Router:** To bypass strict LLM token limits (like those on Groq's free tier), the system now dynamically analyzes your prompt and injects *only* the most relevant MCP tools into the agent's context window.
+2. **Real-Time Jarvis Streaming (SSE):** The frontend no longer waits for the entire execution to finish. Utilizing Server-Sent Events (SSE) and an `asyncio.Queue`, the backend hooks directly into AutoGen's `GroupChatManager` to stream the agents' live "thoughts" and tool calls progressively to the UI.
+3. **Bulletproof MCP Fallbacks:** Each MCP server operates within an isolated `AsyncExitStack`. If a specific integration fails to connect (e.g., expired OAuth keys), the system seamlessly catches the failure, logs a warning, and continues initializing the other integrations without crashing the entire backend.
+4. **Persistent Long-Term Memory (RAG):** Powered by `sentence-transformers` and PostgreSQL's `pgvector`, the `ChiefCoordinator` uses the `save_to_memory` and `search_memory` tools to recall past interactions and user preferences seamlessly across sessions.
 
 ---
 

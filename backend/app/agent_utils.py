@@ -47,7 +47,6 @@ servers_config = [
 ]
 
 def save_to_memory(content: str) -> str:
-    """Save a piece of knowledge to long-term database memory."""
     if not embedder: return "Memory system offline."
     try:
         db: Session = SessionLocal()
@@ -61,12 +60,10 @@ def save_to_memory(content: str) -> str:
         return f"Failed to save: {e}"
 
 def search_memory(query: str) -> str:
-    """Search the long-term database memory for context."""
     if not embedder: return "Memory system offline."
     try:
         db: Session = SessionLocal()
         query_embedding = embedder.encode(query).tolist()
-        # Find top 3 most similar documents using pgvector
         results = db.query(DocumentEmbedding).order_by(
             DocumentEmbedding.embedding.l2_distance(query_embedding)
         ).limit(3).all()
@@ -77,8 +74,6 @@ def search_memory(query: str) -> str:
         return f"Failed to search: {e}"
 
 async def get_relevant_tools(query: str, all_tools: list) -> list:
-    """Semantic Tool Router: Uses Groq to decide which tools to inject."""
-    # Build a compact list of tools
     tool_summaries = [f"- {t.name}: {t.description}" for t in all_tools]
     tool_text = "\n".join(tool_summaries)
     
@@ -96,15 +91,12 @@ async def get_relevant_tools(query: str, all_tools: list) -> list:
     }
     
     try:
-        # Wrap requests.post in run_in_executor to not block event loop
         loop = asyncio.get_event_loop()
         response = await loop.run_in_executor(None, lambda: requests.post("https://api.groq.com/openai/v1/chat/completions", headers=headers, json=data))
         res_json = response.json()
         content = res_json['choices'][0]['message']['content']
-        # Extract array (hacky but handles if LLM outputs an object instead)
         if "{" in content:
             parsed = json.loads(content)
-            # Try to find a list value
             for v in parsed.values():
                 if isinstance(v, list):
                     return v
@@ -113,17 +105,17 @@ async def get_relevant_tools(query: str, all_tools: list) -> list:
             return json.loads(content)
     except Exception as e:
         print(f"Tool routing failed: {e}")
-        return [t.name for t in all_tools[:2]] # Fallback to hack
+        return [t.name for t in all_tools[:2]]
 
-async def process_user_message(message: str) -> str:
+async def process_user_message_stream(message: str, queue: asyncio.Queue):
+    """Processes the message and pushes updates to an asyncio Queue for SSE streaming."""
     try:
-        # Save user message to basic Message history (Optional, but good practice)
         db = SessionLocal()
         db.add(Message(role="user", content=message))
         db.commit()
         db.close()
         
-        async with AsyncExitStack() as stack:
+        async with AsyncExitStack() as main_stack:
             sessions = {}
             function_map = {
                 "save_to_memory": save_to_memory,
@@ -131,7 +123,6 @@ async def process_user_message(message: str) -> str:
             }
             agents = []
             
-            # Setup User Proxy
             user_proxy = autogen.UserProxyAgent(
                 name="UserProxy",
                 human_input_mode="NEVER",
@@ -140,7 +131,7 @@ async def process_user_message(message: str) -> str:
                 code_execution_config={"use_docker": False}
             )
 
-            # Initialize MCP Servers
+            # Robust MCP Initialization
             for s_cfg in servers_config:
                 server_params = StdioServerParameters(
                     command=s_cfg["command"],
@@ -148,16 +139,18 @@ async def process_user_message(message: str) -> str:
                     env=os.environ.copy()
                 )
                 
+                server_stack = AsyncExitStack()
                 try:
-                    read, write = await stack.enter_async_context(stdio_client(server_params))
-                    session = await stack.enter_async_context(ClientSession(read, write))
+                    read, write = await server_stack.enter_async_context(stdio_client(server_params))
+                    session = await server_stack.enter_async_context(ClientSession(read, write))
                     await session.initialize()
+                    
+                    # Transfer cleanup to the main stack
+                    main_stack.push_async_callback(server_stack.aclose)
                     sessions[s_cfg["name"]] = session
                     
                     # Fetch tools
                     tools_resp = await session.list_tools()
-                    
-                    # SEMANTIC TOOL ROUTING
                     relevant_tool_names = await get_relevant_tools(message, tools_resp.tools)
                     
                     tools_list = []
@@ -183,7 +176,6 @@ async def process_user_message(message: str) -> str:
                             
                             function_map[tool.name] = create_tool_handler(tool.name, session)
                     
-                    # Only create agent if it has relevant tools
                     if tools_list:
                         agent_llm_config = llm_config_groq.copy()
                         agent_llm_config["tools"] = tools_list
@@ -195,10 +187,17 @@ async def process_user_message(message: str) -> str:
                         )
                         agents.append(specialized_agent)
                 except Exception as e:
+                    # Connection failed! Clean up the isolated stack and continue gracefully
+                    await server_stack.aclose()
                     print(f"Warning: Failed to load MCP Server {s_cfg['name']}: {e}")
+                    await queue.put({
+                        "role": "system",
+                        "name": "System",
+                        "content": f"[Warning] The {s_cfg['name']} integration failed to connect and will be unavailable for this session."
+                    })
                     continue
 
-            # Create Chief Coordinator with RAG memory tools
+            # Chief Coordinator Setup
             chief_llm_config = llm_config_groq.copy()
             chief_llm_config["tools"] = [
                 {
@@ -206,11 +205,7 @@ async def process_user_message(message: str) -> str:
                     "function": {
                         "name": "search_memory",
                         "description": "Search the pgvector long-term database memory for past context or user preferences.",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {"query": {"type": "string", "description": "The search query"}},
-                            "required": ["query"]
-                        }
+                        "parameters": {"type": "object", "properties": {"query": {"type": "string"}}, "required": ["query"]}
                     }
                 },
                 {
@@ -218,16 +213,11 @@ async def process_user_message(message: str) -> str:
                     "function": {
                         "name": "save_to_memory",
                         "description": "Save an important fact, summary, or user preference to long-term memory.",
-                        "parameters": {
-                            "type": "object",
-                            "properties": {"content": {"type": "string", "description": "The fact to remember"}},
-                            "required": ["content"]
-                        }
+                        "parameters": {"type": "object", "properties": {"content": {"type": "string"}}, "required": ["content"]}
                     }
                 }
             ]
             
-            # Inject auto-context
             past_context = search_memory(message)
             enriched_message = f"User Query: {message}\n\n[Retrieved Context from Memory]:\n{past_context}"
             
@@ -236,40 +226,53 @@ async def process_user_message(message: str) -> str:
                 system_message=(
                     "You are J.A.R.V.I.S., the Chief Coordinator. "
                     "You have direct access to database memory via save_to_memory and search_memory. "
-                    "You delegate tasks to specialized agents if you need to use Notion or Google Workspace. "
-                    "Once you have successfully executed the necessary tools, provide a helpful and professional final response. "
-                    "Do NOT output the word TERMINATE unless the user's request is completely fulfilled."
+                    "You delegate tasks to specialized agents if you need to use external tools. "
+                    "CRITICAL: If a tool returns no results (e.g. 'No relevant memory found.'), DO NOT call it again with the same arguments. Accept the result and respond directly to the user. "
+                    "Once you have answered the user or fulfilled their request, you MUST append the word TERMINATE to the very end of your final message to end the conversation."
                 ),
                 llm_config=chief_llm_config,
             )
             agents.append(chief_agent)
-            
-            # Register all tools to UserProxy
             user_proxy.register_function(function_map=function_map)
             
             if not agents:
-                return "System Error: No AI agents could be initialized due to MCP failures."
+                await queue.put({"role": "system", "name": "Error", "content": "System Error: No AI agents could be initialized due to MCP failures."})
+                return
                 
-            # GroupChat Setup
+            # SSE Hook Function
+            def capture_message(recipient, messages, sender, config):
+                last_msg = messages[-1]
+                # Filter out empty terminal messages
+                if not last_msg.get("content") and not last_msg.get("tool_calls"):
+                    return False, None
+                
+                # Push to async queue without blocking
+                asyncio.create_task(queue.put({
+                    "role": "agent" if sender.name != "UserProxy" else "system",
+                    "name": sender.name,
+                    "content": last_msg.get("content", ""),
+                    "tool_calls": [t.get("function", {}).get("name") for t in last_msg.get("tool_calls", [])] if "tool_calls" in last_msg else []
+                }))
+                return False, None
+
+            # Register hook on the manager so it captures all agent broadcasts
             groupchat = autogen.GroupChat(
                 agents=[user_proxy] + agents,
                 messages=[],
-                max_round=10
+                max_round=15
             )
             manager = autogen.GroupChatManager(groupchat=groupchat, llm_config=llm_config_groq)
+            manager.register_reply([autogen.Agent, None], capture_message, position=1)
             
-            # Start chat
+            # Initiate chat
             await user_proxy.a_initiate_chat(manager, message=enriched_message)
             
-            # Extract final response
-            for msg in reversed(groupchat.messages):
-                if msg.get("name") == "ChiefCoordinator" and msg.get("content") and "tool_calls" not in msg:
-                    return msg["content"].replace("TERMINATE", "").strip()
-                elif msg.get("role") == "assistant" and msg.get("content") and "tool_calls" not in msg:
-                    return msg["content"].replace("TERMINATE", "").strip()
-                
-            return "Task execution finished."
-
     except Exception as e:
         import traceback
-        return f"System Error: Failed to process MCP request. Details: {str(e)}\n\n{traceback.format_exc()}"
+        await queue.put({"role": "system", "name": "Error", "content": f"Critical Error: {str(e)}\n\n{traceback.format_exc()}"})
+    finally:
+        await queue.put(None) # Signal end of stream
+
+# Keeping original method just for backward compatibility if needed
+async def process_user_message(message: str) -> str:
+    return "This endpoint has been replaced by /chat/stream"
