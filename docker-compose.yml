@@ -28,6 +28,10 @@ services:
       - POSTGRES_PORT=5432
       - POSTGRES_DB=aipos
       - GROQ_API_KEY=${GROQ_API_KEY:-}
+      - NOTION_API_KEY=${NOTION_API_KEY:-}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - GOOGLE_REFRESH_TOKEN=${GOOGLE_REFRESH_TOKEN:-}
     depends_on:
       db:
         condition: service_healthy

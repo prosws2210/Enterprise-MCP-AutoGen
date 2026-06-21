@@ -32,6 +32,7 @@ def read_root():
     return {"message": "AI-POS Backend is running"}
 
 @app.post("/chat")
-def chat_with_chief(request: ChatRequest):
-    response_content = agent_utils.process_user_message(request.message)
+async def chat_with_chief(request: ChatRequest):
+    # Pass to the async AutoGen agent processor
+    response_content = await agent_utils.process_user_message(request.message)
     return {"response": response_content}
