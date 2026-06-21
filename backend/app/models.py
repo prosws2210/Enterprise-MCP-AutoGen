@@ -17,7 +17,7 @@ class DocumentEmbedding(Base):
     
     id = Column(Integer, primary_key=True, index=True)
     content = Column(Text)
-    embedding = Column(Vector(1536)) # Example dimension size
+    embedding = Column(Vector(384)) # Using sentence-transformers (all-MiniLM-L6-v2)
     created_at = Column(DateTime, default=datetime.utcnow)
 
 class Message(Base):

@@ -6,3 +6,4 @@ pgvector
 psycopg2-binary
 pyautogen==0.2.35
 mcp
+sentence-transformers
