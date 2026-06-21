@@ -17,7 +17,7 @@ Simply tell the AI: *"Summarize my recent Notion project notes and draft an emai
 This project bridges together some of the most cutting-edge frameworks in the AI landscape:
 
 ### 1. AutoGen (Agentic Orchestration)
-[AutoGen](https://microsoft.github.io/autogen/) is a framework that enables the development of applications using multiple agents that can converse with each other to solve tasks. In AI-POS, we deploy a **Chief Agent**. Instead of just answering questions, this agent can break down your request into sub-tasks, delegate them, and execute code or tools until the overarching goal is achieved.
+[AutoGen](https://microsoft.github.io/autogen/) is a framework that enables the development of applications using multiple agents that can converse with each other to solve tasks. In AI-POS, we deploy an advanced **Multi-Agent GroupChat**. Instead of a single agent doing everything, a **Chief Coordinator** breaks down your request and delegates tasks to specialized sub-agents (like a **NotionAgent** and a **GoogleWorkspaceAgent**). This modularity prevents token limit explosions and makes the system far more robust.
 
 ### 2. Model Context Protocol (MCP)
 The **Model Context Protocol** is an open standard that standardizes how AI models connect to external data sources and tools. 
@@ -40,32 +40,46 @@ graph TD
     User((User))
     Frontend[Next.js Frontend\nJarvis UI]
     Backend[FastAPI Backend\nREST API]
-    AutoGen[AutoGen ChiefAgent]
+    
+    %% Agents
+    subgraph AutoGen GroupChat
+    ChiefAgent[Chief Coordinator]
+    NotionAgent[Notion Agent]
+    GoogleAgent[Google Workspace Agent]
+    end
+    
     LLM((LLM Provider\nGroq/OpenAI))
-    MCPClient[MCP Client]
+    MCPClient[MCP Client Connection Manager]
     
     %% MCP Servers
     MCPServer1[Notion MCP Server]
-    MCPServer2[GitHub MCP Server]
+    MCPServer2[Google Workspace MCP Server]
     
     %% External APIs
     NotionAPI[(Notion API)]
-    GitHubAPI[(GitHub API)]
+    GoogleAPI[(Google Drive & Calendar API)]
     Postgres[(PostgreSQL + pgvector)]
 
     %% Flow
     User -- "Sends Directive" --> Frontend
     Frontend -- "POST /chat" --> Backend
-    Backend -- "Initiates Chat" --> AutoGen
-    AutoGen -- "Generates Plan & Tool Calls" --> LLM
-    LLM -- "Decides to use Notion" --> AutoGen
-    AutoGen -- "Executes Tool" --> MCPClient
+    Backend -- "Initiates Chat" --> ChiefAgent
+    
+    ChiefAgent -- "Delegates Task" --> NotionAgent
+    ChiefAgent -- "Delegates Task" --> GoogleAgent
+    
+    NotionAgent -- "Requests Tool Call" --> LLM
+    GoogleAgent -- "Requests Tool Call" --> LLM
+    LLM -- "Returns Tool Execution Plan" --> NotionAgent
+    
+    NotionAgent -- "Executes Notion Tool" --> MCPClient
+    GoogleAgent -- "Executes Google Tool" --> MCPClient
     
     MCPClient -- "Standardized Protocol" --> MCPServer1
     MCPClient -- "Standardized Protocol" --> MCPServer2
     
     MCPServer1 -- "API Requests" --> NotionAPI
-    MCPServer2 -- "API Requests" --> GitHubAPI
+    MCPServer2 -- "API Requests" --> GoogleAPI
     
     Backend -- "Stores History/Embeddings" --> Postgres
     
@@ -99,6 +113,11 @@ If you have downloaded this project, follow these steps to get your own AI Perso
    ```env
    GROQ_API_KEY=your_groq_api_key_here
    NOTION_API_KEY=your_notion_integration_token_here
+   
+   # Google Workspace Credentials
+   GOOGLE_CLIENT_ID=your_google_client_id_here
+   GOOGLE_CLIENT_SECRET=your_google_client_secret_here
+   GOOGLE_REFRESH_TOKEN=your_google_refresh_token_here
    ```
 
 ### Step 2: Spin Up the Backend & Database
